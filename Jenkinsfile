@@ -1,6 +1,12 @@
 pipeline {
     agent any
-
+    // Define a custom workspace
+    options {
+        // Clean workspace before each build
+        skipDefaultCheckout(true)
+        buildDiscarder(logRotator(numToKeepStr: '5'))
+        // Define custom workspace location
+    }
     environment {
         DOCKER_REGISTRY_CREDENTIALS = 'DockerHubCred'
         DOCKER_IMAGE_NAME = 'saihemanth1997/minicalculator'
@@ -22,22 +28,38 @@ pipeline {
 
         stage('Build') {
             steps {
-                    sh 'mvn clean package'
+                script{
+                    def customWorkspace = "/home/hemanth/Desktop/iiitb/MiniCalculator/"
+                    ws(customWorkspace){
+                     checkout scm   
+                     sh 'mvn clean package'   
+                    }
+                }
             }
         }
 
         stage('Run Tests') {
             steps {
-                    sh 'mvn test'
+                script{
+                def customWorkspace = "/home/hemanth/Desktop/iiitb/MiniCalculator/"
+                    ws(customWorkspace){
+                     checkout scm   
+                     sh 'mvn test' 
+                    }
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
                     script {
-                        docker.build("${DOCKER_IMAGE_NAME}", '.')
-                    }
-            }
+                        def customWorkspace = "/home/hemanth/Desktop/iiitb/MiniCalculator/"
+                        ws(customWorkspace){
+                            checkout scm   
+                            docker.build("${DOCKER_IMAGE_NAME}", '.')
+                         }
+                     }        
+                }
         }
 
         stage('Push Docker Images') {
